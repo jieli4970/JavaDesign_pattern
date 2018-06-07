@@ -1,5 +1,6 @@
 package singletom;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -26,59 +27,73 @@ import java.lang.reflect.Method;
 
 public class SingleTom {
 	
-	public static void main(String[] args) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		SingleTon singleTon = null;
-		SingleTon singleTon2 = null;
+	public static void main(String[] args) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException{
+		SingleTon singleTon = SingleTon.getInstance();
+		Constructor con = SingleTon.class.getDeclaredConstructor();  
 		
-		System.out.println(singleTon2.getInstance());
-		System.out.println(singleTon.getInstance());		
-		Class tmp = singleTon.getInstance().getClass();
-		
-		Field[] fields = tmp.getDeclaredFields();
-		
-		for (int i = 0; i < fields.length; i++) {
-			Field field=fields[i];
-			System.out.println("变量名："+field.getName());
-			
-			field.set(tmp, null);
-			
-			
-			
-			
-		}
+		//默认不能访问private权限的构造方法，设为true，则可以访问 newinstance
+		con.setAccessible(true);  
+		SingleTon singetonTest1 = (SingleTon)con.newInstance();  
+		SingleTon singetonTest2 = (SingleTon)con.newInstance();  		
+		System.out.println(singleTon+"    "+ singetonTest1+"   "+singetonTest2);
+
 		
 		
+		SingleSafe singleSafe = SingleSafe.getInstance();
+		Constructor constructor = singleSafe.getClass().getConstructor();
 		
+		constructor.setAccessible(true);
+		SingleSafe singleSafe2=(SingleSafe) constructor.newInstance();
+		SingleSafe singleSafe3=(SingleSafe) constructor.newInstance();
 		
-		
-		
-		Method[] method= tmp.getMethods();
-		for (int i = 0; i < method.length; i++) {
-			Method method2=method[i];
-			System.out.println("name"+method2.getName());
-			if (method2.getName().equals("getInstance")) {
-				System.out.println(111);
-				SingleTon tmp2 = (SingleTon) method2.invoke(tmp, null);
-				System.out.println(tmp2);
-			}
-			
-			
-		}
-		
+		System.out.println(singleSafe2);
+		System.out.println(singleSafe3);
+
 	}
 
 }
 
 //懒汉式单例类，在第一次调用的时候实例化自己
+//可以通过反射模式破坏单例
 class SingleTon{
 	private SingleTon() {};
 	private static SingleTon singleTon=null;
 //	静态工厂方法
-	public static SingleTon getInstance() {
+	public static  SingleTon getInstance() {
 		if (singleTon == null) {
 			singleTon = new SingleTon();
 		}
 		return singleTon;
+	}
+
+}
+
+//防止反射破快单例
+
+//懒汉式单例类，在第一次调用的时候实例化自己
+class SingleSafe{
+	private static boolean flag = true;
+	private SingleSafe() {
+		if (flag) {
+			flag = !flag;
+			System.out.println(1111);
+		}else {
+			 try {  
+	                throw new Exception("duplicate instance create error!" + SingleSafe.class.getName());  
+	            } catch (Exception e) {  
+	                // TODO Auto-generated catch block  
+	                e.printStackTrace();  
+	            } 
+		}
+		
+	};
+	private static SingleSafe singleSafe=null;
+//	静态工厂方法
+	public static  SingleSafe getInstance() {
+		if (singleSafe == null) {
+			singleSafe = new SingleSafe();
+		}
+		return singleSafe;
 	}
 
 }
